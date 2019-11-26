@@ -22,21 +22,25 @@ from Agents import NeurosmashAgent
     
 
 environment = NeurosmashEnvironment()
+agent = NeurosmashAgent()
+agent.load_state_dict(torch.load("D:/AI/Neurosmash/Brains/model.pt", map_location=torch.device('cpu')))
+
+
 NUM_STEPS = 1000
 rewards = []
 
 game_memory = []
 experience_replay = []
 
-info, reward, state = init_env(environment)
+info, reward, state = environment.init_env()
 for _ in range(NUM_STEPS):
-    action = train_agent.step(state)
+    action = agent.step(state)
     #action = random.randint(0,2)
     values, indices = torch.max(action, 1)
     print(action)
     print("Values", values, "Indices", indices)
     
-    game_over, reward, state = step_safe(environment, indices)
+    game_over, reward, state = environment.step_safe(indices)
     
     rewards.append(reward)
     
@@ -51,7 +55,8 @@ for _ in range(NUM_STEPS):
         
         game_memory = []
         rewards = []
-        init_env(environment)
+        info, reward, state = environment.init_env()
+
         
         
 plt.plot(rewards)
