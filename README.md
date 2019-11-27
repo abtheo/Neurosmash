@@ -5,7 +5,7 @@ Reinforcement Learning Agent
 
 ## Descriptions
 
-`Main.py` - Instantiates an CNN-agent. Loads trained brain from a saved pytorch state_dict into the agent. Then drops the trained agent into an environment, and runs the game a few times.
+`Main.py` - Instantiates a CNN-agent. Loads trained brain from a saved pytorch state_dict into the agent. Then drops the trained agent into an environment, and runs the game a few times.
 
 
 `Env.py` - Class for sending and recieving data to/from the Neurosmash Unity environment.
