@@ -22,17 +22,13 @@ class NeurosmashEnvironment:
         return self._receive()
 
     def _receive(self):
-        # Kudos to Jan for the socket.MSG_WAITALL fix!
-        data   = self.client.recv(2 + 3 * self.size ** 2, socket.MSG_WAITALL)
-        end    = data[0]
+        data_size = 1 + 1 + np.prod(self.IMG_SHAPE)
+        data = self.client.recv(data_size)
+        info   = data[0]
         reward = data[1]
-        state  = [data[i] for i in range(2, len(data))]
-
-        return end, reward, state
-
-    def state2image(self, state):
-        return Image.fromarray(np.array(state, "uint8").reshape(self.size, self.size, 3))
-
+        state  = [data[i] for i in range(2, 196610)]
+        return info, reward, state
+    
     
     def _receive_safe(self):
         while True:
