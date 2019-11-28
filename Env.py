@@ -2,6 +2,7 @@ import random
 import socket
 import struct
 import numpy as np
+from PIL import Image
 
 
 class NeurosmashEnvironment:
@@ -22,13 +23,17 @@ class NeurosmashEnvironment:
         return self._receive()
 
     def _receive(self):
-        data_size = 1 + 1 + np.prod(self.IMG_SHAPE)
-        data = self.client.recv(data_size)
-        info   = data[0]
+        # Kudos to Jan for the socket.MSG_WAITALL fix!
+        data   = self.client.recv(2 + 3 * self.size ** 2, socket.MSG_WAITALL)
+        end    = data[0]
         reward = data[1]
-        state  = [data[i] for i in range(2, 196610)]
-        return info, reward, state
-    
+        state  = [data[i] for i in range(2, len(data))]
+
+        return end, reward, state
+
+    def state2image(self, state):
+        return Image.fromarray(np.array(state, "uint8").reshape(self.size, self.size, 3))
+
     
     def _receive_safe(self):
         while True:
