@@ -6,11 +6,13 @@ from PIL import Image
 
 
 class NeurosmashEnvironment:
-    def __init__(self, ip = "127.0.0.1", port = 13000):
+    def __init__(self, ip = "127.0.0.1", port = 13000, size = 768, timescale = 1):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ip     = ip
         self.port   = port
         self.client.connect((ip, port))
+        self.size       = size
+        self.timescale  = timescale
         
         self.IMG_SHAPE = (256, 256, 3)
 
