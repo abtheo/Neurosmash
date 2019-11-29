@@ -20,6 +20,7 @@ import torch.nn.functional as F
 from Env import NeurosmashEnvironment
 from Agents import NeurosmashAgent
 
+
 #environment = NeurosmashEnvironment()
 environment = NeurosmashEnvironment(timescale=3)
 agent = NeurosmashAgent()
