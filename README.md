@@ -4,11 +4,17 @@ Reinforcement Learning Agent
 =================
 
 ## Descriptions
-
-`Main.py` - Instantiates a CNN-agent. Loads trained brain from a saved pytorch state_dict into the agent. Then drops the trained agent into an environment, and runs the game a few times.
-
+`run_dqn.py` - Train DQN agent on the Neurosmash environment. Default settings - Size:256, Timescale:10
 
 `Env.py` - Class for sending and recieving data to/from the Neurosmash Unity environment.
+
+`DQN.py` - Implements Q-Learning formula. Based on lecture samples.
+
+
+
+---OLD---
+
+`Main.py` - Instantiates a CNN-agent. Loads trained brain from a saved pytorch state_dict into the agent. Then drops the trained agent into an environment, and runs the game a few times.
 
 
 `Agents.py` - Agent classes for interaction with the environment.
@@ -19,3 +25,4 @@ Reinforcement Learning Agent
 
 `run_training.py` - Trains an agent from static training data. 
 *NOTE: Currently configured for GPU-only mode, as it takes forever to run in CPU mode.*
+
