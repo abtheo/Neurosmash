@@ -118,3 +118,49 @@ class QNetMLP(nn.Module):
         x.cuda()
         return self.l2(F.relu(self.l1(x)))
         
+
+class NeurosmashAgent(torch.nn.Module):
+    def __init__(self):
+        super(NeurosmashAgent, self).__init__()
+        #Shape of input image
+        self.state_shape = (256, 256, 3)
+        #Size of action space (Nothing, Left, Right)
+        self.num_actions = 3        
+        self.out_units = self.num_actions
+        
+        #Input channels = 3, output channels = 256
+        self.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
+        #256, 256, 64
+        self.pool = torch.nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
+        #128, 128, 64
+        #self.conv2 = torch.nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        #128, 128, 128
+        
+        #self.pool again
+        #64, 64, 128
+
+        #self.linear = torch.nn.Linear(64*64*128, 128)
+
+        self.output = torch.nn.Linear(128*128*64, self.num_actions)
+        #3 output channels (Nothing=0, Left=1, Right=2)
+        
+    
+    def forward(self, x):
+        x = x.cuda()
+        x = x.view(-1, 3, 256, 256)#.cuda()#.view(1,3,256,256)
+
+        #Convolution layer, ReLU activation
+        x = F.relu(self.conv1(x))
+        #MaxPooling2D
+        x = self.pool(x)
+        
+        #Dropout
+        x = F.dropout(x, 0.2, training=self.training)
+
+        #Flatten pooled layer
+        x = x.view(-1, 128 * 128 * 64)
+
+        #Softmax on linear output layer
+        x = F.softmax(self.output(x), dim=1)
+        
+        return x

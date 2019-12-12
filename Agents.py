@@ -21,7 +21,8 @@ class NeurosmashAgent(torch.nn.Module):
         #Shape of input image
         self.state_shape = (256, 256, 3)
         #Size of action space (Nothing, Left, Right)
-        self.num_actions = 3
+        self.num_actions = 3        
+        self.out_units = self.num_actions
         
         #Input channels = 3, output channels = 256
         self.conv1 = torch.nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
@@ -54,6 +55,11 @@ class NeurosmashAgent(torch.nn.Module):
         return action
     
     def forward(self, x):
+        x = x.cuda()
+        x = x.view(1, 3, 256, 256)#.cuda()#.view(1,3,256,256)
+
+
+
         #Convolution layer, ReLU activation
         x = F.relu(self.conv1(x))
         #MaxPooling2D
@@ -69,6 +75,7 @@ class NeurosmashAgent(torch.nn.Module):
         x = F.relu(self.linear(x))
 
         #Softmax on linear output layer
-        x = F.softmax(self.output(x), dim=1)
+        #x = F.softmax(self.output(x), dim=1)
+        x = self.output(x)
         
         return x
