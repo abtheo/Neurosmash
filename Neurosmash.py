@@ -2,8 +2,17 @@ import numpy as np
 import socket
 from PIL import Image
 
+class Agent:
+    def __init__(self):
+        pass
 
-class NeurosmashEnvironment:
+    def step(self, end, reward, state):
+        # return 0 # nothing
+        # return 1 # left
+        # return 2 # right
+        return   3 # random
+
+class Environment:
     def __init__(self, ip = "127.0.0.1", port = 13000, size = 768, timescale = 1):
         self.client     = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.ip         = ip
