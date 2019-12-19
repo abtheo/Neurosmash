@@ -3,7 +3,7 @@
 # ### **SOW-MKI49-2019-SEM1-V: NeurIPS**
 # 
 # # Project: Neurosmash
-# # Group 13
+# # Group 14
 
 
 """Policies: Different reward schemas to encourage different behaviours"""
@@ -36,7 +36,7 @@ def MeeseeksAndDestroy(reward, done, i):
 
 def SoreLoser(reward, done):
     if done and not reward == 10:
-        return -100
+        return -1000
     if reward == 10:
         return 1000
     else:

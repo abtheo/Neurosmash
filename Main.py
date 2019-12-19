@@ -3,7 +3,7 @@
 # ### **SOW-MKI49-2019-SEM1-V: NeurIPS**
 # 
 # # Project: Neurosmash
-# # Group 13
+# # Group 14
 
 import random
 import socket

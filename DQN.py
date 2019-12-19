@@ -18,14 +18,13 @@ class DQNAgent:
     eps_min = 0.02
     eps_decay = 5000
     
-    
     def __init__(self, target_net, policy_net, memory):
         
         # target and policy networks with the respective optimizers
         self.target_net = target_net
         self.policy_net = policy_net
-        self.optim_policy = optim.RMSprop(self.policy_net.parameters())
-        self.optim_target = optim.RMSprop(self.target_net.parameters())
+        self.optim_policy = optim.Adam(self.policy_net.parameters())
+        self.optim_target = optim.Adam(self.target_net.parameters())
         
         self.num_actions = self.policy_net.out_units
         
