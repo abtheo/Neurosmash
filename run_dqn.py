@@ -28,21 +28,19 @@ import Policies
 #Clear memory
 agent = None
 del agent
-torch.cuda.empty_cache()
 
 #Def Environment
-env = NeurosmashEnvironment(size=256, timescale=1)
+env = NeurosmashEnvironment(size=256, timescale=10)
 
 #Hyperparams
 n_episodes = 500
-transfer_every = 10
+transfer_every = 5
 max_batch_size = 16
-batch_size = 4
+batch_size = 1
 
-in_units = env.size * env.size * 3 # get dim of state space for input to Qnet
-out_units = 3 # get number of actions for Qnet output
-hidden_units = 128
-
+# in_units = env.size * env.size * 3 # get dim of state space for input to Qnet
+# out_units = 3 # get number of actions for Qnet output
+# hidden_units = 128
 
 #Def Agent's brain
 #policy_net = QNetMLP(in_units, hidden_units, out_units)
@@ -69,6 +67,7 @@ if torch.cuda.is_available():
   print("Running on GPU")
   agent.target_net.cuda()
   agent.policy_net.cuda()
+  torch.cuda.empty_cache()
 #Catch KeyboardInterrupts and save model
 try:
     #Reinforcement Loop

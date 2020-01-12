@@ -48,8 +48,12 @@ class DQNAgent:
             return np.random.randint(self.num_actions)
         else:
             with torch.no_grad():
+                state_tensor = torch.Tensor(state)
+                if torch.cuda.is_available():
+                    state_tensor = state_tensor.cuda()
                 # get actions value from policy net and return the index of max action
-                return self.policy_net(torch.Tensor(state).cuda()).argmax().item()
+
+                return self.policy_net(state_tensor).argmax().item()
                                   
 
                                   
@@ -66,7 +70,11 @@ class DQNAgent:
         not_dones = np.array([not step.done for step in train_batch])                        
                                  
         # get Q_max for future state of every transition
-        next_states = torch.Tensor([step.s1 for step in train_batch]).cuda()
+        next_states = torch.Tensor([step.s1 for step in train_batch])
+
+        if torch.cuda.is_available():
+            next_states = next_states.cuda()
+
         with torch.no_grad():
             Q = self.target_net(next_states).cpu().numpy().max(axis=1)
         
@@ -85,9 +93,13 @@ class DQNAgent:
         self.optim_policy.zero_grad()
         se = nn.MSELoss(reduction="sum") # define sum squared error
         # calculate target
-        y = torch.Tensor(self.calculate_target(train_batch)).cuda()
+        y = torch.Tensor(self.calculate_target(train_batch))
         # collect states and compute Qmax
-        states = torch.Tensor([step.s0 for step in train_batch]).cuda()
+        states = torch.Tensor([step.s0 for step in train_batch])
+
+        if torch.cuda.is_available():
+            y = y.cuda()
+            states = states.cuda()
         Q, _ = torch.max(self.policy_net(states), 1)
        
         # train policy net
@@ -145,7 +157,8 @@ class NeurosmashAgent(torch.nn.Module):
         
     
     def forward(self, x):
-        x = x.cuda()
+        if torch.cuda.is_available():
+            x = x.cuda()
         x = x.view(-1, 3, 256, 256)#.cuda()#.view(1,3,256,256)
 
         #Convolution layer, ReLU activation
