@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import tqdm
+import matplotlib.pyplot as plt
 import collections
 
 import torch
@@ -32,16 +33,14 @@ del agent
 env = NeurosmashEnvironment(size=256, timescale=10)
 
 #Hyperparams
-n_episodes = 500
+n_episodes = 10
 transfer_every = n_episodes // 100
 
 batch_size = 1
 
-
 #Def Agent's brain
 policy_net = NeurosmashAgent()
 target_net = NeurosmashAgent()
-
 
 #Def Memory
 memory = ReplayMemory(max_size=1024) 
@@ -55,10 +54,8 @@ epses = []
 #Init DQN agent
 agent = DQNAgent(target_net, policy_net, memory)
 
-
-agent.target_net.load_state_dict("Brains/target_brain.pt")
-agent.policy_net.load_state_dict("Brains/policy_brain.pt")
-
+agent.target_net.load_state_dict(torch.load("Brains/target_brain_b4.pt"))
+agent.policy_net.load_state_dict(torch.load("Brains/policy_brain_b4.pt"))
 
 if torch.cuda.is_available():
   torch.cuda.empty_cache()
@@ -66,19 +63,14 @@ if torch.cuda.is_available():
   agent.target_net.cuda()
   agent.policy_net.cuda()
 
-i=-1
-
 #Reinforcement Loop
-#for i in tqdm.trange(n_episodes):
-while True:
-    i = i+1
+for i in range(n_episodes):
     info, reward, state = env.reset() # reset env before starting a new episode
     j=0
-    R = 0
     while True:
         j += 1
         # interact with env
-        action = agent.step(state)
+        action = agent.step(state, decay_enabled=False)
 
         #observation, reward, done, info = env.step(action)
         done, reward, observation = env.step(action)
@@ -86,36 +78,24 @@ while True:
         #Determine real reward based on Policy
         #reward = Policies.SoreLoser(reward, done)
 
-        # store transaction in memory
-        #memory.store(state, action, reward, observation, done)
-
         # Step to next state
         state = observation
         
-        # sample from memory and train policy
-        # if len(memory.buffer) > batch_size:
-        #     train_batch = memory.sample(batch_size)
-        
-        #     loss = agent.train_policy(train_batch)
-            
-        # # transfer weights from policynet to targetnet
-        # if i % transfer_every == 1:
-        #     agent.target_net.load_state_dict(agent.policy_net.state_dict())
-        
-        #losses.append(loss)
-        #epses.append(agent.eps)
-        
-        #R[i] += reward
-        R += reward
+        #Save rewards for evaluation
+        R[i] = reward
 
         #Reset if game lasts too long:
         #Protects against environment bug where agents can be trapped outside the arena
-        if j > 5000:
+        if j > 1000:
             break
 
         if done:
-            print("\nReward" + str(i) + ": " + str(R))
+            print("\nReward" + str(i) + ": " + str(R[i]))
             # if (i+1) % 10 == 0:
             #     avg = sum(R[i-10:i]) / 10
             #     print("Average over last 10 games: ", avg)
             break
+
+
+plt.scatter(range(n_episodes), R)
+plt.show()

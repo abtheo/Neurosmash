@@ -35,7 +35,12 @@ env = NeurosmashEnvironment(size=256, timescale=10)
 #Hyperparams
 n_episodes = 500
 transfer_every = 5
-batch_size = 16
+max_batch_size = 16
+batch_size = 1
+
+# in_units = env.size * env.size * 3 # get dim of state space for input to Qnet
+# out_units = 3 # get number of actions for Qnet output
+# hidden_units = 128
 
 #Def Agent's brain
 #policy_net = QNetMLP(in_units, hidden_units, out_units)
@@ -45,9 +50,11 @@ target_net = NeurosmashAgent()
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
-#Init empty Memory
+#Init empty Memorys
 memory = ReplayMemory(max_size=1024)
+victory_memory = ReplayMemory(max_size=1024)
 #Init lists
+R = np.zeros(n_episodes)
 reward = 0
 i=-1
 losses = []
@@ -70,6 +77,7 @@ try:
         info, reward, state = env.reset() # reset env before starting a new episode
         j=0
         R = 0
+        shortterm_memory = ReplayMemory(max_size=256)
         while True:
             j += 1
             # interact with env
@@ -79,11 +87,11 @@ try:
             done, reward, observation = env.step(action)
 
             #Determine real reward based on Policy
-            #reward = Policies.SoreLoser(reward, done)
+            reward = Policies.SoreLoser(reward, done)
 
             # store transaction in memory
             transition = [state, action, reward, observation, done]
-            #shortterm_memory.store(*transition)
+            shortterm_memory.store(*transition)
             memory.store(*transition)
 
             # Step to next state
@@ -91,7 +99,18 @@ try:
             
             # sample from memory and train policy
             if len(memory.buffer) > batch_size:
-                train_batch = memory.sample(batch_size)       
+                if len(victory_memory.buffer) > batch_size:
+                    coin_flip = bool(random.getrandbits(1))
+                    if coin_flip:
+                        #Sample from winning games
+                        train_batch = victory_memory.sample(batch_size)
+                    else:
+                        train_batch = memory.sample(batch_size)
+                else:
+                    #Random sample half the time to maintain learning from erroneous events
+                    train_batch = memory.sample(batch_size)
+
+                
                 loss = agent.train_policy(train_batch)
                 
             # transfer weights from policynet to targetnet
@@ -103,19 +122,24 @@ try:
 
             #Reset if game lasts too long:
             #Protects against environment bug where agents can be trapped outside the arena
-            if j > 1000:
+            if j > 5000:
                 break
 
             if done:
+                #If agent wins, append the last N transitions to the victory memory
+                if reward > 9:
+                    last_n = shortterm_memory.get_last(16)
+                    for n in last_n:
+                        victory_memory.store(*n)
                 print(f"\nEpisode: {i} Reward: {R}")
+                # if (i) % 10 == 0:
+                #     avg = sum(R[i-10:i]) / 10
+                #     print("Average reward over last 10 games: ", avg)
                 break
-
 except Exception as e:
     print(e)
     print(traceback.format_exc())
     #Save on intentional keyboard exit
     if type(e) == KeyboardInterrupt:
-        print("Saving...")
         torch.save(agent.target_net.state_dict(), "Brains/target_brain.pt")
         torch.save(agent.policy_net.state_dict(), "Brains/policy_brain.pt")
-        print("Saved!")

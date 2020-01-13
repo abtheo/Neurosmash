@@ -10,9 +10,8 @@ class ReplayMemory:
     sample to get a batch of training data
     """
     
-    def __init__(self, max_size, max_batch_size=16):
+    def __init__(self, max_size):
         self.max_size = max_size
-        self.max_batch_size = max_batch_size
         self.buffer = []
         self.pos = 0 # position of the next element
         

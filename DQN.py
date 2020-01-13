@@ -34,7 +34,7 @@ class DQNAgent:
         self.eps = DQNAgent.eps_start # exploration probability
         self.steps_done = -1 # because decay will be triggered before action is done
         
-    def step(self, state):
+    def step(self, state, decay_enabled=True):
         """
         Based on the current state of the environment, expoloration coefficient 
         and the policy network select an action 
@@ -43,17 +43,19 @@ class DQNAgent:
         self.steps_done += 1
         self.exploration_decay()
         
-        # pick action
-        if np.random.rand() < self.eps: 
-            return np.random.randint(self.num_actions)
-        else:
-            with torch.no_grad():
-                state_tensor = torch.Tensor(state)
-                if torch.cuda.is_available():
-                    state_tensor = state_tensor.cuda()
-                # get actions value from policy net and return the index of max action
+        if decay_enabled:
+            #Return random exploration action
+            if np.random.rand() < self.eps: 
+                return np.random.randint(self.num_actions)
 
-                return self.policy_net(state_tensor).argmax().item()
+        #Else, return action from policy network
+        with torch.no_grad():
+            state_tensor = torch.Tensor(state)
+            if torch.cuda.is_available():
+                state_tensor = state_tensor.cuda()
+            # get actions value from policy net and return the index of max action
+
+            return self.policy_net(state_tensor).argmax().item()
                                   
 
                                   
