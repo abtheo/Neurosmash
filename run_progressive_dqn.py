@@ -33,10 +33,9 @@ del agent
 env = NeurosmashEnvironment(size=256, timescale=10)
 
 #Hyperparams
-n_episodes = 500
+n_episodes = 250
 transfer_every = 5
-max_batch_size = 16
-batch_size = 1
+batch_size = 4
 
 # in_units = env.size * env.size * 3 # get dim of state space for input to Qnet
 # out_units = 3 # get number of actions for Qnet output
@@ -56,7 +55,7 @@ victory_memory = ReplayMemory(max_size=1024)
 #Init lists
 R = np.zeros(n_episodes)
 reward = 0
-i=-1
+
 losses = []
 epses = []
 
@@ -69,77 +68,81 @@ if torch.cuda.is_available():
   agent.policy_net.cuda()
   torch.cuda.empty_cache()
 #Catch KeyboardInterrupts and save model
-try:
-    #Reinforcement Loop
-    #for i in tqdm.trange(n_episodes):
+#i=-1
+# try:
+#     #Reinforcement Loop
+#     #for i in tqdm.trange(n_episodes):
+#     while True:
+#        i += 1
+for i in range(n_episodes):
+    info, reward, state = env.reset() # reset env before starting a new episode
+    j=0
+    shortterm_memory = ReplayMemory(max_size=256)
     while True:
-        i += 1
-        info, reward, state = env.reset() # reset env before starting a new episode
-        j=0
-        R = 0
-        shortterm_memory = ReplayMemory(max_size=256)
-        while True:
-            j += 1
-            # interact with env
-            action = agent.step(state)
+        j += 1
+        # interact with env
+        action = agent.step(state)
 
-            #observation, reward, done, info = env.step(action)
-            done, reward, observation = env.step(action)
+        #observation, reward, done, info = env.step(action)
+        done, base_reward, observation = env.step(action)
 
-            #Determine real reward based on Policy
-            reward = Policies.SoreLoser(reward, done)
+        #Determine real reward based on Policy
+        reward = Policies.LiveLongAndProsper(base_reward, done)
+        #reward = base_reward
+        # store transaction in memory
+        transition = [state, action, reward, observation, done]
+        shortterm_memory.store(*transition)
+        memory.store(*transition)
 
-            # store transaction in memory
-            transition = [state, action, reward, observation, done]
-            shortterm_memory.store(*transition)
-            memory.store(*transition)
-
-            # Step to next state
-            state = observation
-            
-            # sample from memory and train policy
-            if len(memory.buffer) > batch_size:
-                if len(victory_memory.buffer) > batch_size:
-                    coin_flip = bool(random.getrandbits(1))
-                    if coin_flip:
-                        #Sample from winning games
-                        train_batch = victory_memory.sample(batch_size)
-                    else:
-                        train_batch = memory.sample(batch_size)
+        # Step to next state
+        state = observation
+        
+        # sample from memory and train policy
+        if len(memory.buffer) > batch_size:
+            if len(victory_memory.buffer) > batch_size:
+                weighted_coin = random.uniform(0, 1)
+                #coin_flip = bool(random.getrandbits(1))
+                #if coin_flip:
+                if weighted_coin > 0.1:
+                    #Sample from winning games
+                    train_batch = victory_memory.sample(batch_size)
                 else:
-                    #Random sample half the time to maintain learning from erroneous events
                     train_batch = memory.sample(batch_size)
-
-                
-                loss = agent.train_policy(train_batch)
-                
-            # transfer weights from policynet to targetnet
-            if j % transfer_every == 1:
-                agent.target_net.load_state_dict(agent.policy_net.state_dict())
+            else:
+                #Random sample half the time to maintain learning from erroneous events
+                train_batch = memory.sample(batch_size)
+   
+            loss = agent.train_policy(train_batch)
             
-            #R[i] += reward
-            R += reward
+        # transfer weights from policynet to targetnet
+        if j % transfer_every == 1:
+            agent.target_net.load_state_dict(agent.policy_net.state_dict())
+        
+        R[i] = base_reward
+        #R += reward
 
-            #Reset if game lasts too long:
-            #Protects against environment bug where agents can be trapped outside the arena
-            if j > 5000:
-                break
+        #Reset if game lasts too long:
+        #Protects against environment bug where agents can be trapped outside the arena
+        if j > 1000:
+            break
 
-            if done:
-                #If agent wins, append the last N transitions to the victory memory
-                if reward > 9:
-                    last_n = shortterm_memory.get_last(16)
-                    for n in last_n:
-                        victory_memory.store(*n)
-                print(f"\nEpisode: {i} Reward: {R}")
-                # if (i) % 10 == 0:
-                #     avg = sum(R[i-10:i]) / 10
-                #     print("Average reward over last 10 games: ", avg)
-                break
-except Exception as e:
-    print(e)
-    print(traceback.format_exc())
-    #Save on intentional keyboard exit
-    if type(e) == KeyboardInterrupt:
-        torch.save(agent.target_net.state_dict(), "Brains/target_brain.pt")
-        torch.save(agent.policy_net.state_dict(), "Brains/policy_brain.pt")
+        if done:
+            #If agent wins, append the last N transitions to the victory memory
+            if reward > 9:
+                last_n = shortterm_memory.get_last(8)
+                for n in last_n:
+                    victory_memory.store(*n)
+            print(f"\nEpisode: {i} Reward: {R[i]}")
+            break
+
+"""Save model, save rewards, plot wins, plot moving average"""
+name = "p_LLAP_2"
+torch.save(agent.policy_net.state_dict(), f"Brains/policy_brain_{name}.pt")
+np.save(f"Results/{name}_rewards.npy", R)
+
+
+window_width = 5
+cumsum_vec = np.cumsum(np.insert(R, 0, 0)) 
+ma_vec = (cumsum_vec[window_width:] - cumsum_vec[:-window_width]) / window_width
+plt.plot(range(len(ma_vec)), ma_vec)
+plt.show()

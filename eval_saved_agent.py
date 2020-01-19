@@ -14,6 +14,7 @@ import pickle
 import tqdm
 import matplotlib.pyplot as plt
 import collections
+import sys
 
 import torch
 import torch.nn
@@ -25,6 +26,9 @@ from DQN import DQNAgent, QNetMLP, NeurosmashAgent
 from ExperienceReplay import ReplayMemory, Transition
 import Policies
 
+#CLI params
+
+
 #Clear memory
 agent = None
 del agent
@@ -33,7 +37,7 @@ del agent
 env = NeurosmashEnvironment(size=256, timescale=10)
 
 #Hyperparams
-n_episodes = 10
+n_episodes = 25
 transfer_every = n_episodes // 100
 
 batch_size = 1
@@ -54,8 +58,9 @@ epses = []
 #Init DQN agent
 agent = DQNAgent(target_net, policy_net, memory)
 
-agent.target_net.load_state_dict(torch.load("Brains/target_brain_b4.pt"))
+#agent.target_net.load_state_dict(torch.load("Brains/target_brain_b4.pt"))
 agent.policy_net.load_state_dict(torch.load("Brains/policy_brain_b4.pt"))
+agent.target_net.load_state_dict(agent.policy_net.state_dict())
 
 if torch.cuda.is_available():
   torch.cuda.empty_cache()

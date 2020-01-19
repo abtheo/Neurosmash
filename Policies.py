@@ -9,32 +9,21 @@
 """Policies: Different reward schemas to encourage different behaviours"""
 
 #Try to Win + Survive as long as possible
-def LiveLongAndProsper(reward):
+def LiveLongAndProsper(reward, done=None, i=None):
     if reward == 0:
         return 1
-    elif reward == 10:
-        return 1000
-
-#Try to win as quickly as possible.
-#To avoid reward hacking, strongly penalise death
-def SeekAndDestroy(reward, done):
-    if done and not reward == 10:
-        return -1000
-    if reward == 0:
-        return -1
-    if reward == 10:
-        return 10000
+    return reward
 
 #RESULT: Converges to a very efficient suicide machine
 def MeeseeksAndDestroy(reward, done, i):
     if done and not reward == 10:
         return -10000
     if reward == 0:
-        return -1 * i * 0.01
+        return -1 * i * 0.001
     if reward == 10:
         return 10000
 
-def SoreLoser(reward, done):
+def SoreLoser(reward, done, i=None):
     if done and not reward == 10:
         return -1000
     if reward == 10:
