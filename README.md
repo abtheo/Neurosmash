@@ -3,6 +3,8 @@ Reinforcement Learning Agent
 
 =================
 
+![example_run](example_run.gif)
+
 ## Descriptions
 `run_dqn.py` - Train DQN agent on the Neurosmash environment. Default settings - Size:256, Timescale:10
 
